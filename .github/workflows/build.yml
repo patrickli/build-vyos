@@ -1,0 +1,37 @@
+name: Build VyOS
+
+on:
+  workflow_dispatch
+
+env:
+  BRANCH: equuleus
+  BUILD_ARCH: amd64
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Build ISO
+      run: |
+        DOCKER_IMAGE="vyos/vyos-build:${{ env.BRANCH }}"
+        docker pull $DOCKER_IMAGE
+        git clone -b ${{ env.BRANCH }} --single-branch https://github.com/vyos/vyos-build
+        cp -r data vyos-build/
+        cd vyos-build
+        VYOS_VERSION=$(git describe --tags)
+        echo "VYOS_VERSION=$VYOS_VERSION" >> $GITHUB_ENV
+        docker run --rm -v $(pwd):/vyos -w /vyos --privileged --sysctl net.ipv6.conf.lo.disable_ipv6=0 $DOCKER_IMAGE \
+          bash -c "./configure --architecture ${{ env.BUILD_ARCH }} --build-type release --version \"$VYOS_VERSION\" && sudo make iso"
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: VyOS ${{ env.VYOS_VERSION }}
+        tag_name: ${{ env.VYOS_VERSION }}
+        draft: false
+        prerelease: false
+        files: ${{ github.workspace }}/vyos-build/build/vyos-*.iso
