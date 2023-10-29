@@ -3,14 +3,10 @@ name: Build VyOS
 on:
   workflow_dispatch:
     inputs:
-      Branch:
-        description: Branch to build
+      ref:
+        description: Branch or tag to build
         required: true
-        default: equuleus
-        type: choice
-        options:
-          - equuleus
-          - current
+        type: string
 
 env:
   BUILD_ARCH: amd64
@@ -26,9 +22,9 @@ jobs:
       uses: actions/checkout@v3
     - name: Build ISO
       run: |
-        DOCKER_IMAGE="vyos/vyos-build:${{ github.event.inputs.Branch }}"
+        DOCKER_IMAGE="vyos/vyos-build:${{ github.event.inputs.ref }}"
         docker pull $DOCKER_IMAGE
-        git clone -b ${{ github.event.inputs.Branch }} --single-branch https://github.com/vyos/vyos-build
+        git clone -b ${{ github.event.inputs.ref }} --single-branch https://github.com/vyos/vyos-build
         cp -r data vyos-build/
         cd vyos-build
         VYOS_VERSION=$(git describe --tags)
