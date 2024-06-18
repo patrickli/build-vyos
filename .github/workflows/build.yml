@@ -10,6 +10,7 @@ on:
         options:
           - equuleus
           - sagitta
+          - circinus
           - current
       ref:
         description: Branch or tag to build, if different from version
@@ -36,8 +37,17 @@ jobs:
         cd vyos-build
         VYOS_VERSION=$(git describe --tags)
         echo "VYOS_VERSION=$VYOS_VERSION" >> $GITHUB_ENV
+        BUILD_CMD=""
+        COMMON_ARGS="--architecture ${{ env.BUILD_ARCH }} --build-type release --version \"$VYOS_VERSION\" --build-by \"${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com\""
+        if [[ "${{ github.event.inputs.version }}" == "sagitta" ]]; then
+          BUILD_CMD="make clean && ./build-vyos-image iso $COMMON_ARGS"
+        elif [[ "${{ github.event.inputs.version }}" == "circinus" ]]; then
+          BUILD_CMD="make clean && ./build-vyos-image generic $COMMON_ARGS"
+        else
+          BUILD_CMD="./configure $COMMON_ARGS && sudo make iso"
+        fi
         docker run --rm -v $(pwd):/vyos -w /vyos --privileged --sysctl net.ipv6.conf.lo.disable_ipv6=0 $DOCKER_IMAGE \
-          bash -c "./configure --architecture ${{ env.BUILD_ARCH }} --build-type release --version \"$VYOS_VERSION\" && sudo make iso"
+          bash -c "$BUILD_CMD"
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
