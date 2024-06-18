@@ -40,9 +40,9 @@ jobs:
         BUILD_CMD=""
         COMMON_ARGS="--architecture ${{ env.BUILD_ARCH }} --build-type release --version \"$VYOS_VERSION\" --build-by \"${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com\""
         if [[ "${{ github.event.inputs.version }}" == "sagitta" ]]; then
-          BUILD_CMD="make clean && ./build-vyos-image iso $COMMON_ARGS"
+          BUILD_CMD="sudo make clean && sudo ./build-vyos-image iso $COMMON_ARGS"
         elif [[ "${{ github.event.inputs.version }}" == "circinus" ]]; then
-          BUILD_CMD="make clean && ./build-vyos-image generic $COMMON_ARGS"
+          BUILD_CMD="sudo make clean && sudo ./build-vyos-image generic $COMMON_ARGS"
         else
           BUILD_CMD="./configure $COMMON_ARGS && sudo make iso"
         fi
